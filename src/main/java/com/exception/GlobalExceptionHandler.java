@@ -17,7 +17,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ApiResponse<Object>> handleBadRequest(IllegalArgumentException ex) {
+    public ResponseEntity<ApiResponse<Object>> handleBadRequest(BadRequestException ex) {
         return ResponseEntity
                 .badRequest()
                 .body(ApiResponse.error(ErrorCode.BAD_REQUEST, ex.getMessage()));
@@ -39,7 +39,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse<Object>> handleIllegalArgument(IllegalArgumentException ex) {
         return ResponseEntity
-                .status(ex.getHttpStatus())
+                .status(400)
                 .body(ApiResponse.error(ErrorCode.INTERNAL_ERROR, ex.getMessage()));
     }
 

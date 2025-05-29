@@ -1,42 +1,43 @@
 package com.model;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "project")
-@Getter
-@Setter
+@Table(name = "project_assignment")
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Project {
+public class ProjectAssignment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "project_id")
-    private Long id;
+    @Column(name = "assignment_id")
+    private Long assignmentId;
 
-    @Column(name = "project_code", nullable = false, unique = true)
-    private String projectCode;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "employee_id", nullable = false)
+    private Employee employee;
 
-    @Column(name = "project_name", nullable = false)
-    private String projectName;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_id", nullable = false)
+    private Project project;
 
-    @Column(name = "pm_email", nullable = false)
-    private String pmEmail;
+    @Column(name = "workload_percent", nullable = false)
+    private Integer workloadPercent; // 1–100 (% thời gian mỗi ngày)
 
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
 
     @Column(name = "end_date", nullable = false)
     private LocalDate endDate;
-
-    @Column(name = "description", columnDefinition = "TEXT")
-    private String description;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -55,4 +56,3 @@ public class Project {
         this.updatedAt = LocalDateTime.now();
     }
 }
-
