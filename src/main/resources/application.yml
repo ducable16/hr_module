@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: HR-module
+  datasource:
+    url: jdbc:postgresql://localhost:5432/hr_module
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
+  key-gen: z2Xh9KD5c8sNFd7wQie3Ruty1HdkJ1Kx

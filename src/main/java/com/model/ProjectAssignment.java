@@ -31,7 +31,7 @@ public class ProjectAssignment {
     private Project project;
 
     @Column(name = "workload_percent", nullable = false)
-    private Integer workloadPercent; // 1–100 (% thời gian mỗi ngày)
+    private Integer workloadPercent;
 
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;

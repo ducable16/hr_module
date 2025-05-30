@@ -42,5 +42,11 @@ public class GlobalExceptionHandler {
                 .status(400)
                 .body(ApiResponse.error(ErrorCode.INTERNAL_ERROR, ex.getMessage()));
     }
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Object>> handleAccessDenied(AccessDeniedException ex) {
+        return ResponseEntity
+                .status(ex.getHttpStatus())
+                .body(ApiResponse.error(ErrorCode.ACCESS_DENIED, ex.getMessage()));
+    }
 
 }
