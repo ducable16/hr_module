@@ -1,13 +1,21 @@
 package com.service.base;
 
 
+import com.dto.EmployeeDto;
 import com.model.Employee;
+import com.request.ChangeRoleRequest;
+import com.request.EmployeeCreateRequest;
+import com.request.EmployeeUpdateRequest;
 
 public interface EmployeeService {
 
-    boolean isAdmin(Long employeeId);
+    EmployeeDto getEmployeeById(Long employeeId);
 
-    boolean isPM(Long employeeId);
+    EmployeeDto createEmployee(EmployeeCreateRequest request);
 
-    Employee getEmployeeById(Long employeeId);
+    EmployeeDto updateEmployee(Long employeeId, EmployeeUpdateRequest request);
+
+    void deleteEmployee(Long employeeId);
+
+    EmployeeDto changeRole(ChangeRoleRequest request);
 }

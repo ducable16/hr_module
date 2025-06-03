@@ -1,18 +1,23 @@
 package com.service.base;
 
 
+import com.dto.ProjectDto;
 import com.model.Project;
+import com.request.ProjectCreateRequest;
+import com.request.ProjectUpdateRequest;
+
 import java.util.List;
 
 public interface ProjectManagementService {
 
-    Project createProject(Project project, Long creatorId);
+    ProjectDto createProject(ProjectCreateRequest request);
 
-    Project updateProject(Long projectId, Project updatedProject, Long updaterId);
+    ProjectDto updateProject(Long projectId, ProjectUpdateRequest request);
 
-    void deleteProject(Long projectId, Long requesterId);
+    void deleteProject(Long projectId);
 
-    List<Project> getAllProjectsForAdmin();
+    List<ProjectDto> getAllProjectsForAdmin();
 
-    List<Project> getProjectsForUser(Long userId);
+    List<ProjectDto> getProjectsForEmployee(Long employeeId);
+
 }
