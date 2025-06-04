@@ -1,10 +1,14 @@
 package com.service.impl;
 
-import com.dto.EmployeeDto;
+import com.model.Project;
+import com.model.ProjectAssignment;
+import com.model.dto.EmployeeDto;
 import com.exception.EntityNotFoundException;
 import com.model.Employee;
 import com.enums.Role;
+import com.model.dto.EmployeeProjectHistoryDto;
 import com.repository.EmployeeRepository;
+import com.repository.ProjectAssignmentRepository;
 import com.request.ChangeRoleRequest;
 import com.request.EmployeeCreateRequest;
 import com.request.EmployeeUpdateRequest;
@@ -13,6 +17,10 @@ import com.util.EmployeeCodeGenerator;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
 
 @Service
 @AllArgsConstructor
@@ -20,6 +28,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private final EmployeeRepository employeeRepository;
     private final EmployeeCodeGenerator employeeCodeGenerator;
+    private final ProjectAssignmentRepository projectAssignmentRepository;
 
 
     private EmployeeDto toDto(Employee employee) {
@@ -79,6 +88,28 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setRole(request.getRole());
         employeeRepository.save(employee);
         return toDto(employee);
+    }
+
+    @Override
+    public List<EmployeeProjectHistoryDto> getProjectHistoryForEmployee(Long employeeId) {
+        List<ProjectAssignment> assignments = projectAssignmentRepository.findByEmployee_Id(employeeId);
+        List<EmployeeProjectHistoryDto> result = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+
+        for (ProjectAssignment a : assignments) {
+            boolean isActive = !today.isBefore(a.getStartDate()) && !today.isAfter(a.getEndDate());
+            Project p = a.getProject();
+            result.add(new EmployeeProjectHistoryDto(
+                    p.getProjectCode(),
+                    p.getProjectName(),
+                    a.getWorkloadPercent(),
+                    a.getStartDate(),
+                    a.getEndDate(),
+                    isActive
+            ));
+        }
+
+        return result;
     }
 
 }

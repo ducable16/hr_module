@@ -1,11 +1,13 @@
 package com.service.base;
 
 
-import com.dto.EmployeeDto;
-import com.model.Employee;
+import com.model.dto.EmployeeDto;
+import com.model.dto.EmployeeProjectHistoryDto;
 import com.request.ChangeRoleRequest;
 import com.request.EmployeeCreateRequest;
 import com.request.EmployeeUpdateRequest;
+
+import java.util.List;
 
 public interface EmployeeService {
 
@@ -18,4 +20,7 @@ public interface EmployeeService {
     void deleteEmployee(Long employeeId);
 
     EmployeeDto changeRole(ChangeRoleRequest request);
+
+    List<EmployeeProjectHistoryDto> getProjectHistoryForEmployee(Long employeeId);
+
 }

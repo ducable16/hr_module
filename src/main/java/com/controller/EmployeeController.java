@@ -1,13 +1,15 @@
 package com.controller;
 
-import com.dto.EmployeeDto;
-import com.model.Employee;
+import com.model.dto.EmployeeDto;
+import com.model.dto.EmployeeProjectHistoryDto;
 import com.request.ChangeRoleRequest;
 import com.request.EmployeeCreateRequest;
 import com.request.EmployeeUpdateRequest;
 import com.service.base.EmployeeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/employee")
@@ -16,7 +18,7 @@ public class EmployeeController {
 
     private final EmployeeService employeeService;
 
-    @PostMapping
+    @PostMapping()
     public EmployeeDto create(@RequestBody EmployeeCreateRequest request) {
         return employeeService.createEmployee(request);
     }
@@ -35,5 +37,10 @@ public class EmployeeController {
     @PutMapping("/change-role")
     public EmployeeDto changeEmployeeRole(@RequestBody ChangeRoleRequest request) {
         return employeeService.changeRole(request);
+    }
+
+    @GetMapping("/project-history/{employeeId}")
+    public List<EmployeeProjectHistoryDto> getEmployeeProjectHistory(@PathVariable Long employeeId) {
+        return employeeService.getProjectHistoryForEmployee(employeeId);
     }
 }

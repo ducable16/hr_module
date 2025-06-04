@@ -1,8 +1,9 @@
 package com.service.base;
 
 
-import com.dto.ProjectDto;
-import com.model.Project;
+import com.model.dto.ProjectDto;
+import com.model.dto.ProjectMemberDto;
+import com.request.AssignEmployeeRequest;
 import com.request.ProjectCreateRequest;
 import com.request.ProjectUpdateRequest;
 
@@ -19,5 +20,13 @@ public interface ProjectManagementService {
     List<ProjectDto> getAllProjectsForAdmin();
 
     List<ProjectDto> getProjectsForEmployee(Long employeeId);
+
+    void assignEmployeeToProject(AssignEmployeeRequest request);
+
+    List<ProjectMemberDto> getMembersOfProject(Long projectId);
+
+    List<ProjectMemberDto> getCurrentMembersOfProject(Long projectId);
+
+    List<ProjectMemberDto> getPastMembersOfProject(Long projectId);
 
 }

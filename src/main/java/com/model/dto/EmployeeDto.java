@@ -1,4 +1,4 @@
-package com.dto;
+package com.model.dto;
 
 import com.enums.Role;
 import com.model.Employee;
