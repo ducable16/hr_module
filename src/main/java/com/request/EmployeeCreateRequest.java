@@ -1,5 +1,6 @@
 package com.request;
 
+import com.enums.Role;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -10,6 +11,6 @@ public class EmployeeCreateRequest {
     private String lastName;
     private String email;
     private String password;
-    private String role;
+    private Role role;
     private LocalDate dob;
 }

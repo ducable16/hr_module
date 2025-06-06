@@ -1,12 +1,9 @@
 package com.service;
 
 import com.enums.Role;
-import com.model.Employee;
+import com.model.LoginAccount;
 import com.response.TokenResponse;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -14,6 +11,8 @@ import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,43 +23,55 @@ public class JwtService {
     @Value("${spring.key-gen}")
     private String SECRET_KEY;
 
-    private final long ACCESS_TOKEN_EXPIRATION = 1000 * 60 * 20;
-    private final long REFRESH_TOKEN_EXPIRATION = 1000L * 60 * 60 * 24 * 7;
+    private final long ACCESS_TOKEN_EXPIRATION = 1000 * 60 * 20; // 20 phút
+    private final long REFRESH_TOKEN_EXPIRATION = 1000L * 60 * 60 * 24 * 7; // 7 ngày
 
-    // Generate token
     private Key getSignKey() {
         return Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
     }
 
-    public TokenResponse generateTokenWithUserDetails(UserDetails userDetails) {
+    // ========================== GENERATE ===========================
+
+    public String generateAccessToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
-        if (userDetails instanceof Employee) {
-            claims.put("role", ((Employee)userDetails).getRole().name());
+        if (userDetails instanceof LoginAccount account) {
+            claims.put("role", account.getRole().name());
         }
-        String accessToken = Jwts.builder()
+
+        return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRATION))
                 .signWith(getSignKey(), SignatureAlgorithm.HS256)
                 .compact();
+    }
 
-        String refreshToken = Jwts.builder()
+    public String generateRefreshToken(UserDetails userDetails) {
+        Map<String, Object> claims = new HashMap<>();
+        if (userDetails instanceof com.model.LoginAccount account) {
+            claims.put("role", account.getRole().name());
+        }
+
+        return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_EXPIRATION))
                 .signWith(getSignKey(), SignatureAlgorithm.HS256)
                 .compact();
+    }
 
+    public TokenResponse generateTokenWithUserDetails(UserDetails userDetails) {
+        String accessToken = generateAccessToken(userDetails);
+        String refreshToken = generateRefreshToken(userDetails);
         return new TokenResponse(accessToken, refreshToken);
     }
 
+    // ========================== PARSE & VALIDATE ===========================
+
     private Claims extractAllClaims(String token) {
-        if (token != null && token.startsWith("Bearer ")) {
-            token = token.substring(7);
-        }
-        token = token.trim();
+        token = cleanToken(token);
         try {
             return Jwts.parser()
                     .setSigningKey(getSignKey())
@@ -74,68 +85,38 @@ public class JwtService {
     }
 
     public String extractUsername(String token) {
-        if (token.startsWith("Bearer ")) {
-            token = token.substring(7);
-        }
-
-        token = token.trim();
-        return Jwts.parser()
-                .setSigningKey(getSignKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
+        return extractAllClaims(token).getSubject();
     }
 
     public Role extractRole(String token) {
-        Claims claims = extractAllClaims(token);
-        String roleStr = claims.get("role", String.class);
+        String roleStr = extractAllClaims(token).get("role", String.class);
         return Role.valueOf(roleStr);
     }
 
     public boolean isTokenValid(String token) {
         try {
-            Jwts.parser().setSigningKey(getSignKey()).build().parseClaimsJws(token);
+            token = cleanToken(token);
+            Jwts.parser()
+                    .setSigningKey(getSignKey())
+                    .build()
+                    .parseClaimsJws(token);
             return true;
-        } catch (Exception e) {
+        } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
     }
+    public LocalDateTime extractExpiration(String token) {
+        Claims claims = extractAllClaims(token);
+        Date expiration = claims.getExpiration();
+        return expiration.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+    }
 
-    public TokenResponse refreshToken(String refreshToken) {
-        if (!isTokenValid(refreshToken)) {
-            throw new IllegalArgumentException("Refresh token is invalid or expired");
+    // ========================== UTIL ===========================
+
+    private String cleanToken(String token) {
+        if (token != null && token.startsWith("Bearer ")) {
+            token = token.substring(7);
         }
-
-        Claims claims = extractAllClaims(refreshToken);
-        String username = claims.getSubject();
-        String roleStr = claims.get("role", String.class);
-        Role role = Role.valueOf(roleStr);
-
-        // Tạo access token mới
-        Map<String, Object> newClaims = new HashMap<>();
-        newClaims.put("role", role.name());
-
-        String newAccessToken = Jwts.builder()
-                .setClaims(newClaims)
-                .setSubject(username)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRATION))
-                .signWith(getSignKey(), SignatureAlgorithm.HS256)
-                .compact();
-
-        // Có thể dùng lại refreshToken cũ, hoặc tạo refresh token mới tuỳ nhu cầu
-        // Trong ví dụ này, tạo refresh token mới
-//        String newRefreshToken = Jwts.builder()
-//                .setClaims(newClaims)
-//                .setSubject(username)
-//                .setIssuedAt(new Date())
-//                .setExpiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_EXPIRATION))
-//                .signWith(getSignKey(), SignatureAlgorithm.HS256)
-//                .compact();
-
-        return new TokenResponse(newAccessToken, refreshToken);
+        return token.trim();
     }
 }
-
-

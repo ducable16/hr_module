@@ -5,9 +5,9 @@ import java.time.LocalDate;
 
 @Data
 public class EmployeeUpdateRequest {
+    private Long employeeId;
     private String firstName;
     private String lastName;
     private String email;
-    private String role;
     private LocalDate dob;
 }

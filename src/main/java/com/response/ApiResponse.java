@@ -31,7 +31,6 @@ public class ApiResponse<T> {
     }
 
     public static <T> ApiResponse<T> success(T data) {
-        System.out.println(data);
         return new ApiResponse<>(200, true, "OK", data, null);
     }
 

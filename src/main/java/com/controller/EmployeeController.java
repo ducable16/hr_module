@@ -1,7 +1,7 @@
 package com.controller;
 
 import com.model.dto.EmployeeDto;
-import com.model.dto.EmployeeProjectHistoryDto;
+import com.model.dto.EmployeeProjectParticipationDto;
 import com.request.ChangeRoleRequest;
 import com.request.EmployeeCreateRequest;
 import com.request.EmployeeUpdateRequest;
@@ -23,10 +23,9 @@ public class EmployeeController {
         return employeeService.createEmployee(request);
     }
 
-    @PutMapping("/{id}")
-    public EmployeeDto update(@PathVariable Long id,
-                              @RequestBody EmployeeUpdateRequest request) {
-        return employeeService.updateEmployee(id, request);
+    @PutMapping()
+    public EmployeeDto update(@RequestBody EmployeeUpdateRequest request) {
+        return employeeService.updateEmployee(request);
     }
 
     @DeleteMapping("/{id}")
@@ -35,12 +34,12 @@ public class EmployeeController {
     }
 
     @PutMapping("/change-role")
-    public EmployeeDto changeEmployeeRole(@RequestBody ChangeRoleRequest request) {
-        return employeeService.changeRole(request);
+    public void changeEmployeeRole(@RequestBody ChangeRoleRequest request) {
+        employeeService.changeRole(request);
     }
 
     @GetMapping("/project-history/{employeeId}")
-    public List<EmployeeProjectHistoryDto> getEmployeeProjectHistory(@PathVariable Long employeeId) {
-        return employeeService.getProjectHistoryForEmployee(employeeId);
+    public List<EmployeeProjectParticipationDto> getEmployeeProjectHistory(@PathVariable Long employeeId) {
+        return employeeService.getProjectParticipationHistory(employeeId);
     }
 }

@@ -24,10 +24,9 @@ public class ProjectManagementController {
         return projectService.createProject(request);
     }
 
-    @PutMapping("/{projectId}")
-    public ProjectDto updateProject(@PathVariable Long projectId,
-                                    @RequestBody ProjectUpdateRequest request) {
-        return projectService.updateProject(projectId, request);
+    @PutMapping()
+    public ProjectDto updateProject(@RequestBody ProjectUpdateRequest request) {
+        return projectService.updateProject(request);
     }
 
     @DeleteMapping("/{projectId}")
@@ -42,7 +41,7 @@ public class ProjectManagementController {
 
     @GetMapping("/employee/{employeeId}")
     public List<ProjectDto> getProjectsForEmployee(@PathVariable Long employeeId) {
-        return projectService.getProjectsForEmployee(employeeId);
+        return projectService.getDistinctProjectsForEmployee(employeeId);
     }
 
     @PostMapping("/assign")

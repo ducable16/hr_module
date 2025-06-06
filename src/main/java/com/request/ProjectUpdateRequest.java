@@ -6,6 +6,7 @@ import java.time.LocalDate;
 
 @Data
 public class ProjectUpdateRequest {
+    private Long projectId;
     private String projectName;
     private String pmEmail;
     private LocalDate startDate;

@@ -24,7 +24,7 @@ public class ProjectCodeGenerator {
 
     public String generateNextCode() {
         int next = counter.incrementAndGet();
-        return PREFIX + String.format("%05d", next); // 5 chữ số, ví dụ: P00001
+        return PREFIX + String.format("%05d", next);
     }
 }
 

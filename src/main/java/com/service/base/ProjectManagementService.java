@@ -13,13 +13,13 @@ public interface ProjectManagementService {
 
     ProjectDto createProject(ProjectCreateRequest request);
 
-    ProjectDto updateProject(Long projectId, ProjectUpdateRequest request);
+    ProjectDto updateProject(ProjectUpdateRequest request);
 
     void deleteProject(Long projectId);
 
     List<ProjectDto> getAllProjectsForAdmin();
 
-    List<ProjectDto> getProjectsForEmployee(Long employeeId);
+    List<ProjectDto> getDistinctProjectsForEmployee(Long employeeId);
 
     void assignEmployeeToProject(AssignEmployeeRequest request);
 

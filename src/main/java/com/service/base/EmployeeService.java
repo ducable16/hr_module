@@ -2,7 +2,7 @@ package com.service.base;
 
 
 import com.model.dto.EmployeeDto;
-import com.model.dto.EmployeeProjectHistoryDto;
+import com.model.dto.EmployeeProjectParticipationDto;
 import com.request.ChangeRoleRequest;
 import com.request.EmployeeCreateRequest;
 import com.request.EmployeeUpdateRequest;
@@ -15,12 +15,12 @@ public interface EmployeeService {
 
     EmployeeDto createEmployee(EmployeeCreateRequest request);
 
-    EmployeeDto updateEmployee(Long employeeId, EmployeeUpdateRequest request);
+    EmployeeDto updateEmployee(EmployeeUpdateRequest request);
 
     void deleteEmployee(Long employeeId);
 
-    EmployeeDto changeRole(ChangeRoleRequest request);
+    void changeRole(ChangeRoleRequest request);
 
-    List<EmployeeProjectHistoryDto> getProjectHistoryForEmployee(Long employeeId);
+    List<EmployeeProjectParticipationDto> getProjectParticipationHistory(Long employeeId);
 
 }

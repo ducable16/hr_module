@@ -1,25 +1,27 @@
 package com.service.impl;
 
+import com.model.LoginAccount;
 import com.model.Project;
 import com.model.ProjectAssignment;
 import com.model.dto.EmployeeDto;
 import com.exception.EntityNotFoundException;
 import com.model.Employee;
-import com.enums.Role;
-import com.model.dto.EmployeeProjectHistoryDto;
+import com.model.dto.EmployeeProjectParticipationDto;
+import com.model.dto.ParticipationPeriodDto;
 import com.repository.EmployeeRepository;
+import com.repository.LoginAccountRepository;
 import com.repository.ProjectAssignmentRepository;
+import com.repository.ProjectRepository;
 import com.request.ChangeRoleRequest;
 import com.request.EmployeeCreateRequest;
 import com.request.EmployeeUpdateRequest;
 import com.service.base.EmployeeService;
 import com.util.EmployeeCodeGenerator;
 import lombok.AllArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 
 @Service
@@ -29,6 +31,9 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final EmployeeRepository employeeRepository;
     private final EmployeeCodeGenerator employeeCodeGenerator;
     private final ProjectAssignmentRepository projectAssignmentRepository;
+    private final ProjectRepository projectRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final LoginAccountRepository loginAccountRepository;
 
 
     private EmployeeDto toDto(Employee employee) {
@@ -49,25 +54,35 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .email(request.getEmail())
-                .password(request.getPassword())
-                .role(Role.valueOf(request.getRole()))
                 .dob(request.getDob())
                 .build();
         employeeRepository.save(employee);
+
+        LoginAccount loginAccount = LoginAccount.builder()
+                .employeeId(employee.getId())
+                .email(employee.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role(request.getRole())
+                .build();
+
+        loginAccountRepository.save(loginAccount);
         return toDto(employee);
     }
 
     @Override
-    public EmployeeDto updateEmployee(Long employeeId, EmployeeUpdateRequest request) {
-        Employee employee = employeeRepository.findById(employeeId)
-                .orElseThrow(() -> new EntityNotFoundException("Employee not found"));
+    public EmployeeDto updateEmployee(EmployeeUpdateRequest request) {
+        Employee employee = employeeRepository.findById(request.getEmployeeId()).orElseThrow(() -> new EntityNotFoundException("Employee not found"));
 
         if(request.getFirstName() != null) {employee.setFirstName(request.getFirstName());};
         if(request.getLastName() != null) {employee.setLastName(request.getLastName());};
         if(request.getEmail() != null) {employee.setEmail(request.getEmail());};
-        if(request.getRole() != null) {employee.setRole(Role.valueOf(request.getRole()));}
         if(request.getDob() != null) {employee.setDob(request.getDob());};
 
+        LoginAccount account = loginAccountRepository.findLoginAccountByEmployeeId(employee.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Account not found"));
+
+        account.setEmail(employee.getEmail());
+        loginAccountRepository.save(account);
 
         employeeRepository.save(employee);
 
@@ -81,36 +96,59 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public EmployeeDto changeRole(ChangeRoleRequest request) {
-        Employee employee = employeeRepository.findById(request.getEmployeeId())
+    public void changeRole(ChangeRoleRequest request) {
+        LoginAccount account = loginAccountRepository.findLoginAccountByEmployeeId(request.getEmployeeId())
                 .orElseThrow(() -> new EntityNotFoundException("Employee not found"));
 
-        employee.setRole(request.getRole());
-        employeeRepository.save(employee);
-        return toDto(employee);
+        account.setRole(request.getRole());
+        loginAccountRepository.save(account);
     }
 
     @Override
-    public List<EmployeeProjectHistoryDto> getProjectHistoryForEmployee(Long employeeId) {
-        List<ProjectAssignment> assignments = projectAssignmentRepository.findByEmployee_Id(employeeId);
-        List<EmployeeProjectHistoryDto> result = new ArrayList<>();
-        LocalDate today = LocalDate.now();
+    public List<EmployeeProjectParticipationDto> getProjectParticipationHistory(Long employeeId) {
+        List<ProjectAssignment> assignments = projectAssignmentRepository.findByEmployeeId(employeeId);
 
-        for (ProjectAssignment a : assignments) {
-            boolean isActive = !today.isBefore(a.getStartDate()) && !today.isAfter(a.getEndDate());
-            Project p = a.getProject();
-            result.add(new EmployeeProjectHistoryDto(
-                    p.getProjectCode(),
-                    p.getProjectName(),
-                    a.getWorkloadPercent(),
-                    a.getStartDate(),
-                    a.getEndDate(),
-                    isActive
-            ));
+        Set<Long> projectIds = new HashSet<>();
+        for (ProjectAssignment assignment : assignments) {
+            projectIds.add(assignment.getProjectId());
         }
 
-        return result;
+        List<Project> projectList = projectRepository.findAllById(projectIds);
+        Map<Long, Project> projectMap = new HashMap<>();
+        for (Project project : projectList) {
+            projectMap.put(project.getId(), project);
+        }
+
+        Map<Long, EmployeeProjectParticipationDto> dtoMap = new LinkedHashMap<>();
+
+        for (ProjectAssignment assignment : assignments) {
+            Long projectId = assignment.getProjectId();
+            Project project = projectMap.get(projectId);
+
+            if (!dtoMap.containsKey(projectId)) {
+                dtoMap.put(projectId, EmployeeProjectParticipationDto.builder()
+                        .projectId(projectId)
+                        .projectName(project.getProjectName())
+                        .projectCode(project.getProjectCode())
+                        .projectStartDate(project.getStartDate())
+                        .projectEndDate(project.getEndDate())
+                        .participations(new ArrayList<>())
+                        .build()
+                );
+            }
+
+            EmployeeProjectParticipationDto dto = dtoMap.get(projectId);
+            dto.getParticipations().add(ParticipationPeriodDto.builder()
+                        .startDate(assignment.getStartDate())
+                        .endDate(assignment.getEndDate())
+                        .workloadPercent(assignment.getWorkloadPercent())
+                        .build()
+            );
+        }
+        return new ArrayList<>(dtoMap.values());
     }
+
+
 
 }
 

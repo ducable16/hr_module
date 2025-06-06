@@ -10,14 +10,14 @@ import java.util.List;
 
 public interface ProjectAssignmentRepository extends JpaRepository<ProjectAssignment, Long> {
 
-    List<ProjectAssignment> findByEmployee_Id(Long employeeId);
+    List<ProjectAssignment> findByEmployeeId(Long employeeId);
 
-    List<ProjectAssignment> findByProject_Id(Long projectId);
+    List<ProjectAssignment> findByProjectId(Long projectId);
 
     @Query("""
-    SELECT a FROM ProjectAssignment a 
-    WHERE a.employee.id = :employeeId 
-      AND a.startDate <= :endDate 
+    SELECT a FROM ProjectAssignment a
+    WHERE a.employeeId = :employeeId
+      AND a.startDate <= :endDate
       AND a.endDate >= :startDate
 """)
     List<ProjectAssignment> findByEmployeeIdAndDateRangeOverlap(
@@ -28,7 +28,7 @@ public interface ProjectAssignmentRepository extends JpaRepository<ProjectAssign
 
     @Query("""
     SELECT a FROM ProjectAssignment a
-    WHERE a.project.id = :projectId
+    WHERE a.projectId = :projectId
       AND :today BETWEEN a.startDate AND a.endDate
 """)
     List<ProjectAssignment> findCurrentMembersOfProject(@Param("projectId") Long projectId,
@@ -36,7 +36,7 @@ public interface ProjectAssignmentRepository extends JpaRepository<ProjectAssign
 
     @Query("""
     SELECT a FROM ProjectAssignment a
-    WHERE a.project.id = :projectId
+    WHERE a.projectId = :projectId
       AND a.endDate < :today
 """)
     List<ProjectAssignment> findPastMembersOfProject(@Param("projectId") Long projectId,

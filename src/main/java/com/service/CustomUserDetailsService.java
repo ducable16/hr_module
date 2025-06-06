@@ -1,6 +1,7 @@
 package com.service;
 
 import com.repository.EmployeeRepository;
+import com.repository.LoginAccountRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -17,18 +18,17 @@ import java.util.List;
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final PasswordEncoder passwordEncoder;
-
-    private final EmployeeRepository employeeRepository;
+    private final LoginAccountRepository loginAccountRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // TODO Change this code to load from DB
-        return new User(username, passwordEncoder.encode("1"), List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        return loginAccountRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
+
     @Bean
     public UserDetailsService userDetailsService() {
-        return email -> employeeRepository.findByEmail(email)
+        return email -> loginAccountRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Employee not found"));
     }
 }

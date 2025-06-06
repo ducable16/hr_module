@@ -40,9 +40,10 @@ public class ProjectManagementServiceImpl implements ProjectManagementService {
     private List<ProjectMemberDto> toProjectMemberDtoList(List<ProjectAssignment> assignments) {
         List<ProjectMemberDto> result = new ArrayList<>();
         for (ProjectAssignment a : assignments) {
-            String fullName = a.getEmployee().getFirstName() + " " + a.getEmployee().getLastName();
+            Employee employee = employeeRepository.findEmployeeById(a.getEmployeeId()).orElseThrow(() -> new EntityNotFoundException("Employee not found"));
+            String fullName = employee.getFirstName() + " " + employee.getLastName();
             result.add(new ProjectMemberDto(
-                    a.getEmployee().getEmployeeCode(),
+                    employee.getEmployeeCode(),
                     fullName,
                     a.getWorkloadPercent(),
                     a.getStartDate(),
@@ -68,9 +69,8 @@ public class ProjectManagementServiceImpl implements ProjectManagementService {
     }
 
     @Override
-    public ProjectDto updateProject(Long projectId, ProjectUpdateRequest request) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new EntityNotFoundException("Project not found"));
+    public ProjectDto updateProject(ProjectUpdateRequest request) {
+        Project project = projectRepository.findById(request.getProjectId()).orElseThrow(() -> new EntityNotFoundException("Project not found"));
 
         if (request.getProjectName() != null) project.setProjectName(request.getProjectName());
         if (request.getPmEmail() != null) project.setPmEmail(request.getPmEmail());
@@ -98,7 +98,7 @@ public class ProjectManagementServiceImpl implements ProjectManagementService {
     }
 
     @Override
-    public List<ProjectDto> getProjectsForEmployee(Long employeeId) {
+    public List<ProjectDto> getDistinctProjectsForEmployee(Long employeeId) {
         return projectRepository.findProjectsByEmployeeId(employeeId).stream()
                 .map(this::toDto)
                 .toList();
@@ -137,8 +137,8 @@ public class ProjectManagementServiceImpl implements ProjectManagementService {
         }
 
         ProjectAssignment assignment = ProjectAssignment.builder()
-                .employee(employee)
-                .project(project)
+                .employeeId(employee.getId())
+                .projectId(project.getId())
                 .workloadPercent(request.getWorkloadPercent())
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
@@ -149,7 +149,7 @@ public class ProjectManagementServiceImpl implements ProjectManagementService {
 
     @Override
     public List<ProjectMemberDto> getMembersOfProject(Long projectId) {
-        List<ProjectAssignment> assignments = projectAssignmentRepository.findByProject_Id(projectId);
+        List<ProjectAssignment> assignments = projectAssignmentRepository.findByProjectId(projectId);
         return toProjectMemberDtoList(assignments);
     }
 

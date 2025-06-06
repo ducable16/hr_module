@@ -33,6 +33,10 @@ public class ApiResponseWrapper implements ResponseBodyAdvice<Object> {
                                   @Nonnull Class<? extends HttpMessageConverter<?>> selectedConverterType,
                                   @Nonnull ServerHttpRequest request,
                                   @Nonnull ServerHttpResponse response) {
+        if (body == null) {
+            return ApiResponse.success(null);
+        }
+
         if (body instanceof String) {
             response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
             try {
