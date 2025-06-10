@@ -1,6 +1,7 @@
 spring:
   application:
     name: HR-module
+    employee-default-password: 123321
   datasource:
     url: jdbc:postgresql://localhost:5432/hr_module
     username: postgres

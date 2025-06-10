@@ -1,11 +1,12 @@
 package com.service.base;
 
 
-import com.model.dto.EmployeeDto;
-import com.model.dto.EmployeeProjectParticipationDto;
+import com.enums.Role;
+import com.model.dto.*;
 import com.request.ChangeRoleRequest;
 import com.request.EmployeeCreateRequest;
 import com.request.EmployeeUpdateRequest;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -13,7 +14,11 @@ public interface EmployeeService {
 
     EmployeeDto getEmployeeById(Long employeeId);
 
-    EmployeeDto createEmployee(EmployeeCreateRequest request);
+    Page<EmployeeDto> getAllEmployeesForAdmin(Role role, int page, int size);
+
+    EmployeeDto getEmployeeByEmail(String email);
+
+    EmployeeOnCreateDto createEmployee(EmployeeCreateRequest request);
 
     EmployeeDto updateEmployee(EmployeeUpdateRequest request);
 
@@ -21,6 +26,10 @@ public interface EmployeeService {
 
     void changeRole(ChangeRoleRequest request);
 
-    List<EmployeeProjectParticipationDto> getProjectParticipationHistory(Long employeeId);
+    List<EmployeeProjectParticipationDto> getProjectParticipationHistory(String token, Long employeeId);
+
+    List<EmployeeSearchDto> searchByEmail(String emailFragment);
+
+    List<ParticipationPeriodDto> getParticipationPeriod(Long projectId, Long employeeId);
 
 }

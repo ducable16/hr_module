@@ -1,6 +1,9 @@
 package com.repository;
 
 import com.model.Project;
+import jakarta.annotation.Nonnull;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -26,6 +29,10 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     WHERE e.employeeCode = :employeeCode
 """)
     List<Project> findProjectsByEmployeeCode(@Param("employeeCode") String employeeCode);
+
+    boolean existsByIdAndPmEmail(Long projectId, String pmEmail);
+
+    List<Project> findProjectByPmEmail(String pmEmail);
 
     @Query("SELECT MAX(CAST(SUBSTRING(p.projectCode, 2) AS int)) FROM Project p")
     Integer findMaxProjectCodeNumber();

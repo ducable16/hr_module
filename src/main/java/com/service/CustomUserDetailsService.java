@@ -1,5 +1,6 @@
 package com.service;
 
+import com.exception.EntityNotFoundException;
 import com.repository.EmployeeRepository;
 import com.repository.LoginAccountRepository;
 import lombok.AllArgsConstructor;
@@ -23,12 +24,12 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         return loginAccountRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
     }
 
     @Bean
     public UserDetailsService userDetailsService() {
         return email -> loginAccountRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("Employee not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Employee not found"));
     }
 }

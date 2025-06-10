@@ -42,6 +42,10 @@ public class Employee {
     @Column(name = "dob")
     private LocalDate dob;
 
+    @Column(name = "role")
+    @Enumerated(EnumType.STRING)
+    private Role role;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

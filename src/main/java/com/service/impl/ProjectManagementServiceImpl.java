@@ -1,5 +1,7 @@
 package com.service.impl;
 
+import com.enums.Role;
+import com.exception.AccessDeniedException;
 import com.model.dto.ProjectDto;
 import com.model.dto.ProjectMemberDto;
 import com.exception.EntityNotFoundException;
@@ -12,10 +14,16 @@ import com.repository.ProjectRepository;
 import com.request.AssignEmployeeRequest;
 import com.request.ProjectCreateRequest;
 import com.request.ProjectUpdateRequest;
+import com.service.JwtService;
 import com.service.base.ProjectManagementService;
 import com.util.ProjectCodeGenerator;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import com.exception.IllegalArgumentException;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -33,6 +41,8 @@ public class ProjectManagementServiceImpl implements ProjectManagementService {
 
     private final ProjectCodeGenerator projectCodeGenerator;
 
+    private final JwtService jwtService;
+
     ProjectDto toDto(Project project) {
         return new ProjectDto(project);
     }
@@ -45,6 +55,8 @@ public class ProjectManagementServiceImpl implements ProjectManagementService {
             result.add(new ProjectMemberDto(
                     employee.getEmployeeCode(),
                     fullName,
+                    employee.getEmail(),
+                    employee.getRole(),
                     a.getWorkloadPercent(),
                     a.getStartDate(),
                     a.getEndDate()
@@ -74,8 +86,30 @@ public class ProjectManagementServiceImpl implements ProjectManagementService {
 
         if (request.getProjectName() != null) project.setProjectName(request.getProjectName());
         if (request.getPmEmail() != null) project.setPmEmail(request.getPmEmail());
-        if (request.getStartDate() != null) project.setStartDate(request.getStartDate());
-        if (request.getEndDate() != null) project.setEndDate(request.getEndDate());
+        if (request.getStartDate() != null) {
+            if(project.getStartDate().isBefore(request.getEndDate())) {
+                List<ProjectAssignment> assignments = projectAssignmentRepository.findByProjectId(request.getProjectId());
+                for (ProjectAssignment a : assignments) {
+                    if(a.getStartDate().isBefore(request.getStartDate())) {
+                        a.setStartDate(request.getStartDate());
+                        projectAssignmentRepository.save(a);
+                    }
+                }
+            }
+            project.setStartDate(request.getStartDate());
+        }
+        if (request.getEndDate() != null) {
+            if(project.getEndDate() == null) {
+                List<ProjectAssignment> assignments = projectAssignmentRepository.findByProjectId(request.getProjectId());
+                for (ProjectAssignment a : assignments) {
+                    if(a.getEndDate() == null || a.getEndDate().isAfter(request.getEndDate())) {
+                        a.setEndDate(request.getEndDate());
+                    }
+                    projectAssignmentRepository.save(a);
+                }
+            }
+            project.setEndDate(request.getEndDate());
+        }
         if (request.getDescription() != null) project.setDescription(request.getDescription());
 
         projectRepository.save(project);
@@ -91,8 +125,16 @@ public class ProjectManagementServiceImpl implements ProjectManagementService {
     }
 
     @Override
-    public List<ProjectDto> getAllProjectsForAdmin() {
-        return projectRepository.findAll().stream()
+    public Page<ProjectDto> getAllProjectsForAdmin(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
+        return projectRepository.findAll(pageable)
+                .map(this::toDto);
+    }
+
+    @Override
+    public List<ProjectDto> getProjectsForPM(String token) {
+        String pmEmail = jwtService.extractUsername(token);
+        return projectRepository.findProjectByPmEmail(pmEmail).stream()
                 .map(this::toDto)
                 .toList();
     }
@@ -102,6 +144,9 @@ public class ProjectManagementServiceImpl implements ProjectManagementService {
         return projectRepository.findProjectsByEmployeeId(employeeId).stream()
                 .map(this::toDto)
                 .toList();
+    }
+    public static boolean isOverlapping(LocalDate start1, LocalDate end1, LocalDate start2, LocalDate end2) {
+        return !(end1.isBefore(start2) || end2.isBefore(start1));
     }
 
     @Override
@@ -114,16 +159,22 @@ public class ProjectManagementServiceImpl implements ProjectManagementService {
         if (request.getWorkloadPercent() < 0 || request.getWorkloadPercent() > 100) {
             throw new IllegalArgumentException("Workload must be between 0 and 100");
         }
+        if (request.getStartDate().isBefore(project.getStartDate())) {
+            throw new IllegalArgumentException("Start date must not before project start date");
+        }
 
-        if (request.getEndDate().isAfter(project.getEndDate())) {
+        if (project.getEndDate() != null && request.getEndDate() != null && request.getEndDate().isAfter(project.getEndDate())) {
             throw new IllegalArgumentException("End date must not exceed project end date");
+        }
+        if(request.getEndDate() == null && project.getEndDate() != null) {
+            request.setEndDate(project.getEndDate());
         }
 
         List<ProjectAssignment> activeAssignments = projectAssignmentRepository
                 .findByEmployeeIdAndDateRangeOverlap(
                         request.getEmployeeId(),
                         request.getStartDate(),
-                        request.getEndDate()
+                        request.getEndDate() == null ? LocalDate.now() : request.getEndDate()
                 );
 
         int totalExistingWorkload = activeAssignments.stream()
@@ -135,6 +186,20 @@ public class ProjectManagementServiceImpl implements ProjectManagementService {
         if (totalAfterAssign > 100) {
             throw new IllegalArgumentException("Total workload exceeds 100% for the given period");
         }
+        List<ProjectAssignment> list =  projectAssignmentRepository.findByEmployeeIdAndProjectId(request.getEmployeeId(), request.getProjectId());
+        for (ProjectAssignment a : list) {
+            if(a.getEndDate() == null) {
+                if(request.getStartDate().isAfter(a.getStartDate()) || (request.getEndDate() != null && request.getEndDate().isAfter(a.getStartDate()))) {
+                    throw new IllegalArgumentException("Participation periods must not overlap");
+                }
+            }
+            else {
+                if(isOverlapping(a.getStartDate(), a.getEndDate(), request.getStartDate(), request.getEndDate())) {
+                    throw new IllegalArgumentException("Participation periods must not overlap");
+                }
+            }
+        }
+
 
         ProjectAssignment assignment = ProjectAssignment.builder()
                 .employeeId(employee.getId())
@@ -148,7 +213,15 @@ public class ProjectManagementServiceImpl implements ProjectManagementService {
     }
 
     @Override
-    public List<ProjectMemberDto> getMembersOfProject(Long projectId) {
+    public List<ProjectMemberDto> getMembersOfProject(String token, Long projectId) {
+        Role role = jwtService.extractRole(token);
+        if(!role.equals(Role.ADMIN)) {
+            Long employeeId = jwtService.extractEmployeeId(token);
+            String pmEmail = jwtService.extractUsername(token);
+            if(!projectAssignmentRepository.existsByProjectIdAndEmployeeId(projectId, employeeId) && !projectRepository.existsByIdAndPmEmail(projectId, pmEmail)) {
+                throw new AccessDeniedException("You do not have permission to access this project");
+            }
+        }
         List<ProjectAssignment> assignments = projectAssignmentRepository.findByProjectId(projectId);
         return toProjectMemberDtoList(assignments);
     }

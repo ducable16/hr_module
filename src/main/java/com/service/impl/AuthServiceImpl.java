@@ -1,17 +1,19 @@
 package com.service.impl;
 
+import com.exception.EntityNotFoundException;
 import com.model.AuthSession;
 import com.model.LoginAccount;
 import com.repository.AuthSessionRepository;
 import com.repository.LoginAccountRepository;
 import com.request.LoginRequest;
+import com.request.RefreshTokenRequest;
 import com.response.TokenResponse;
 import com.service.JwtService;
 import com.service.base.AuthService;
 import lombok.AllArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import com.exception.IllegalArgumentException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -50,12 +52,13 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public TokenResponse refresh(String refreshToken) {
-        if (!jwtService.isTokenValid(refreshToken)) {
+    public TokenResponse refresh(RefreshTokenRequest request) {
+        if (!jwtService.isTokenValid(request.getRefreshToken())) {
+            System.out.println(request.getRefreshToken());
             throw new IllegalArgumentException("Refresh token is invalid or expired");
         }
 
-        AuthSession session = authSessionRepository.findByRefreshToken(refreshToken)
+        AuthSession session = authSessionRepository.findByRefreshToken(request.getRefreshToken())
                 .orElseThrow(() -> new IllegalArgumentException("Session not found"));
 
         if (session.getExpiresAt().isBefore(LocalDateTime.now())) {
@@ -64,8 +67,8 @@ public class AuthServiceImpl implements AuthService {
         }
 
         LoginAccount account = loginAccountRepository.findByEmail(
-                jwtService.extractUsername(refreshToken)
-        ).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                jwtService.extractUsername(request.getRefreshToken())
+        ).orElseThrow(() -> new EntityNotFoundException("User not found"));
 
         // Tạo token mới
         TokenResponse newToken = jwtService.generateTokenWithUserDetails(account);

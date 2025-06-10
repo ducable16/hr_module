@@ -49,5 +49,17 @@ public class GlobalExceptionHandler {
                 .status(ex.getHttpStatus())
                 .body(ApiResponse.error(ErrorCode.ACCESS_DENIED, ex.getMessage()));
     }
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Object>> handleOriginAccessDenied(org.springframework.security.access.AccessDeniedException ex) {
+        return ResponseEntity
+                .status(403)
+                .body(ApiResponse.error(ErrorCode.ACCESS_DENIED, ex.getMessage()));
+    }
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ApiResponse<Object>> handleUnauthorized(UnauthorizedException ex) {
+        return ResponseEntity
+                .status(401)
+                .body(ApiResponse.error(ex.getErrorCode(), ex.getMessage()));
+    }
 
 }

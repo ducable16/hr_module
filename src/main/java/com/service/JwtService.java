@@ -23,8 +23,8 @@ public class JwtService {
     @Value("${spring.key-gen}")
     private String SECRET_KEY;
 
-    private final long ACCESS_TOKEN_EXPIRATION = 1000 * 60 * 20; // 20 phút
-    private final long REFRESH_TOKEN_EXPIRATION = 1000L * 60 * 60 * 24 * 7; // 7 ngày
+    private final long ACCESS_TOKEN_EXPIRATION = 1000 * 60 * 15;
+    private final long REFRESH_TOKEN_EXPIRATION = 1000L * 60 * 60 * 24 * 7;
 
     private Key getSignKey() {
         return Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
@@ -36,6 +36,7 @@ public class JwtService {
         Map<String, Object> claims = new HashMap<>();
         if (userDetails instanceof LoginAccount account) {
             claims.put("role", account.getRole().name());
+            claims.put("employeeId", account.getEmployeeId());
         }
 
         return Jwts.builder()
@@ -92,6 +93,12 @@ public class JwtService {
         String roleStr = extractAllClaims(token).get("role", String.class);
         return Role.valueOf(roleStr);
     }
+
+    public Long extractEmployeeId(String token) {
+        Long employeeId = extractAllClaims(token).get("employeeId", Long.class);
+        return employeeId;
+    }
+
 
     public boolean isTokenValid(String token) {
         try {

@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 @Data
 public class ProjectDto {
 
+    private Long projectId;
     private String projectCode;
     private String projectName;
     private String pmEmail;
@@ -19,6 +20,7 @@ public class ProjectDto {
     private LocalDateTime updatedAt;
 
     public ProjectDto(Project project) {
+        this.projectId = project.getId();
         this.projectCode = project.getProjectCode();
         this.projectName = project.getProjectName();
         this.pmEmail = project.getPmEmail();
