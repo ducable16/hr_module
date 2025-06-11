@@ -43,6 +43,5 @@ jobs:
             echo "Stopping old app (if running)..."
             pkill -f 'java -jar' || true
             echo "Starting hr_module..."
-            nohup java -jar $(ls /home/ec2-user/hr_module/target/*.jar) > /home/ec2-user/hr_module/app.log 2>&1 &
-            disown
+            setsid java -jar /home/ec2-user/hr_module/target/*.jar > /home/ec2-user/hr_module/app.log 2>&1 < /dev/null &
             echo "✅ hr_module is now running"
