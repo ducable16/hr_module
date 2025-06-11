@@ -1,43 +1,45 @@
-name: CI/CD Deploy Java Maven to EC2
+name: Build & Deploy hr_module to EC2
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: ✅ Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout source
+        uses: actions/checkout@v4
 
-      - name: ☕ Set up JDK 17
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: 🔐 Save private key to file
-        run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" > deploy_key
-          chmod 600 deploy_key
+      - name: Build with Maven Wrapper
+        run: ./mvnw clean package -DskipTests
 
-      - name: 🚀 Deploy to EC2 via SSH
-        uses: appleboy/ssh-action@v1.0.0
+      - name: Copy hr_module JAR to EC2
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
-          key_path: deploy_key
+          key: ${{ secrets.EC2_KEY }}
+          source: "target/*.jar"
+          target: "/home/ec2-user/hr_module"
+
+      - name: SSH and Restart hr_module on EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
           script: |
-            if [ ! -d "/home/ec2-user/hr_module" ]; then
-              git clone https://github.com/ducable16/hr_module.git /home/ec2-user/hr_module
-            fi
-
-            cd /home/ec2-user/hr_module
-            git pull origin main
-
-            pkill -f 'mvn spring-boot:run' || true
-
-            tmux kill-session -t hrapp || true
-            tmux new-session -d -s hrapp 'cd /home/ec2-user/hr_module && mvn spring-boot:run > spring.log 2>&1'
+            echo "Stopping old app (if running)..."
+            pkill -f 'java -jar' || true
+            echo "Starting hr_module..."
+            nohup java -jar /home/ec2-user/hr_module/*.jar > /home/ec2-user/hr_module/app.log 2>&1 &
+            echo "✅ hr_module is now running"
