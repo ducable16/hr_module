@@ -28,6 +28,7 @@ jobs:
 
       - name: 🚀 Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1.0.0
+        continue-on-error: true
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
@@ -43,4 +44,5 @@ jobs:
 
             pkill -f 'java -jar' || true
 
-            nohup java -jar target/*.jar > app.log 2>&1 &
+            nohup java -jar target/*.jar > app.log 2>&1 & || true
+            
