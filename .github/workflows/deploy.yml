@@ -20,7 +20,9 @@ jobs:
           java-version: '17'
 
       - name: Build with Maven Wrapper
-        run: ./mvnw clean package -DskipTests
+        run: |
+          chmod +x ./mvnw
+          ./mvnw clean package -DskipTests
 
       - name: Copy hr_module JAR to EC2
         uses: appleboy/scp-action@v0.1.7
