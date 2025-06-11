@@ -40,9 +40,7 @@ jobs:
 
             cd /home/ec2-user/hr_module
             git pull origin main
-            mvn clean package -DskipTests
 
-            pkill -f 'java -jar' || true
+            pkill -f 'mvn spring-boot:run' || true
 
-            nohup java -jar target/*.jar > app.log 2>&1 & || true
-            
+            nohup mvn spring-boot:run > spring.log 2>&1 &
