@@ -21,25 +21,26 @@ jobs:
       - name: 🧪 Build with Maven
         run: mvn clean package -DskipTests
 
+      - name: 🔐 Save private key to file
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > deploy_key
+          chmod 600 deploy_key
+
       - name: 🚀 Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          key_path: deploy_key
           script: |
-            # Clone nếu thư mục chưa tồn tại
             if [ ! -d "/home/ec2-user/hr_module" ]; then
               git clone https://github.com/ducable16/hr_module.git /home/ec2-user/hr_module
             fi
-            
-            # Pull code và build lại
+
             cd /home/ec2-user/hr_module
             git pull origin main
             mvn clean package -DskipTests
-            
-            # Stop app cũ nếu đang chạy
+
             pkill -f 'java -jar' || true
-            
-            # Start app mới
+
             nohup java -jar target/*.jar > app.log 2>&1 &
