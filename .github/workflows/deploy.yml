@@ -40,4 +40,9 @@ jobs:
             pkill -f 'mvn spring-boot:run' || true
 
             tmux kill-session -t hrapp || true
-            tmux new-session -d -s hrapp 'cd /home/ec2-user/hr_module && mvn spring-boot:run > spring.log 2>&1'
+            tmux new-session -d -s hrapp
+            
+            tmux send-keys -t hrapp 'cd /home/ec2-user/hr_module' C-m
+            tmux send-keys -t hrapp 'pkill -f "mvn spring-boot:run" || true' C-m
+            tmux send-keys -t hrapp 'nohup mvn spring-boot:run > spring.log 2>&1 &' C-m
+            tmux send-keys -t hrapp 'disown' C-m
