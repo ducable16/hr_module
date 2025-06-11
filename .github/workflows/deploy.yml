@@ -18,9 +18,6 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: 🧪 Build with Maven
-        run: mvn clean package -DskipTests
-
       - name: 🔐 Save private key to file
         run: |
           echo "${{ secrets.EC2_SSH_KEY }}" > deploy_key
