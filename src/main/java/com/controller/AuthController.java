@@ -19,6 +19,7 @@ public class AuthController {
     public TokenResponse login(@RequestBody LoginRequest request) {
         System.out.println("Login request: " + request.getEmail());
         return authService.login(request);
+
     }
 
     @PostMapping("/logout")
