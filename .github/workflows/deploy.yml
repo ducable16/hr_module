@@ -40,4 +40,4 @@ jobs:
 
             pkill -f 'mvn spring-boot:run' || true
 
-            nohup mvn spring-boot:run > spring.log 2>&1 &
+            setsid nohup mvn spring-boot:run > spring.log 2>&1 < /dev/null &
