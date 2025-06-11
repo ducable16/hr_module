@@ -40,8 +40,8 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            echo "Stopping old app (if running)..."
-            pkill -f 'java -jar' || true
-            echo "Starting hr_module..."
-            setsid java -jar /home/ec2-user/hr_module/target/*.jar > /home/ec2-user/hr_module/app.log 2>&1 < /dev/null &
-            echo "✅ hr_module is now running"
+            echo "Stopping old hr_module service..."
+            sudo systemctl stop hr_module || true
+            echo "Starting hr_module service..."
+            sudo systemctl start hr_module
+            echo "✅ hr_module service restarted"
