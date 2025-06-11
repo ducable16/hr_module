@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class HrModuleApplication {
 
 	public static void main(String[] args) {
+		System.out.println("HrModuleApplication running");
 		SpringApplication.run(HrModuleApplication.class, args);
 	}
 
