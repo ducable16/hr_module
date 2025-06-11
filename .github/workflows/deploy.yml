@@ -44,4 +44,5 @@ jobs:
             pkill -f 'java -jar' || true
             echo "Starting hr_module..."
             nohup java -jar $(ls /home/ec2-user/hr_module/target/*.jar) > /home/ec2-user/hr_module/app.log 2>&1 &
+            disown
             echo "✅ hr_module is now running"
