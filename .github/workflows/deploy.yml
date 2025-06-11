@@ -31,7 +31,7 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "target/*.jar"
-          target: "/home/ec2-user/hr_module"
+          target: "/home/ec2-user/hr_module/target"
 
       - name: SSH and Restart hr_module on EC2
         uses: appleboy/ssh-action@v1.0.3
@@ -43,5 +43,5 @@ jobs:
             echo "Stopping old app (if running)..."
             pkill -f 'java -jar' || true
             echo "Starting hr_module..."
-            nohup java -jar /home/ec2-user/hr_module/target/*.jar > /home/ec2-user/hr_module/app.log 2>&1 &
+            nohup java -jar $(ls /home/ec2-user/hr_module/target/*.jar) > /home/ec2-user/hr_module/app.log 2>&1 &
             echo "✅ hr_module is now running"
