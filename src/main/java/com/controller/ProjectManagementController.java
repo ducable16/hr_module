@@ -4,6 +4,7 @@ import com.model.dto.ProjectDto;
 import com.model.dto.ProjectMemberDto;
 import com.model.dto.WorkloadRemainDto;
 import com.request.*;
+import com.service.base.ProjectManagementService;
 import com.service.impl.ProjectManagementServiceImpl;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -17,7 +18,7 @@ import java.util.List;
 @AllArgsConstructor
 public class ProjectManagementController {
 
-    private final ProjectManagementServiceImpl projectService;
+    private final ProjectManagementService projectService;
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")

@@ -16,6 +16,7 @@ import com.repository.ProjectAssignmentRepository;
 import com.repository.ProjectRepository;
 import com.request.*;
 import com.service.JwtService;
+import com.service.base.ProjectManagementService;
 import com.util.ProjectCodeGenerator;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -33,7 +34,7 @@ import java.util.TreeMap;
 
 @Service
 @AllArgsConstructor
-public class ProjectManagementServiceImpl {
+public class ProjectManagementServiceImpl implements ProjectManagementService {
 
     private final ProjectRepository projectRepository;
 
@@ -69,6 +70,7 @@ public class ProjectManagementServiceImpl {
         return result;
     }
 
+    @Override
     public ProjectDto createProject(ProjectCreateRequest request) {
         Project project = Project.builder()
                 .projectCode(projectCodeGenerator.generateNextCode())
@@ -95,6 +97,7 @@ public class ProjectManagementServiceImpl {
         return toDto(project);
     }
 
+    @Override
     public ProjectDto updateProject(ProjectUpdateRequest request) {
         Project project = projectRepository.findById(request.getProjectId()).orElseThrow(() -> new EntityNotFoundException("Project not found"));
 
@@ -139,6 +142,7 @@ public class ProjectManagementServiceImpl {
         return toDto(project);
     }
 
+    @Override
     public void deleteProject(Long projectId) {
         if (!projectRepository.existsById(projectId)) {
             throw new EntityNotFoundException("Project not found");
@@ -146,12 +150,14 @@ public class ProjectManagementServiceImpl {
         projectRepository.deleteById(projectId);
     }
 
+    @Override
     public Page<ProjectDto> getAllProjectsForAdmin(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
         return projectRepository.findAll(pageable)
                 .map(this::toDto);
     }
 
+    @Override
     public List<ProjectDto> getCompletedProjectsForPM(String token) {
         String pmEmail = jwtService.extractUsername(token);
         return projectRepository.findCompletedProjectsByPmEmail(pmEmail).stream()
@@ -159,6 +165,7 @@ public class ProjectManagementServiceImpl {
                 .toList();
     }
 
+    @Override
     public List<ProjectDto> getActiveProjectForPM(String token) {
         String pmEmail = jwtService.extractUsername(token);
         return projectRepository.findActiveProjectsByPmEmail(pmEmail).stream()
@@ -166,12 +173,14 @@ public class ProjectManagementServiceImpl {
                 .toList();
     }
 
+    @Override
     public List<ProjectDto> getCurrentProjectsForEmployee(Long employeeId) {
         return projectRepository.findCurrentProjectsByEmployeeId(employeeId).stream()
                 .map(this::toDto)
                 .toList();
     }
 
+    @Override
     public List<ProjectDto> getDistinctProjectsForEmployee(Long employeeId) {
         return projectRepository.findProjectsByEmployeeId(employeeId).stream()
                 .map(this::toDto)
@@ -193,6 +202,7 @@ public class ProjectManagementServiceImpl {
 
     }
 
+    @Override
     public void assignEmployeeToProject(AssignEmployeeRequest request) {
         Employee employee = employeeRepository.findById(request.getEmployeeId())
                 .orElseThrow(() -> new EntityNotFoundException("Employee not found"));
@@ -255,6 +265,7 @@ public class ProjectManagementServiceImpl {
         projectAssignmentRepository.save(assignment);
     }
 
+    @Override
     public WorkloadRemainDto workloadPercentRemaining(WorkloadRemainCheckRequest request) {
         List<ProjectAssignment> activeAssignments;
 
@@ -283,6 +294,7 @@ public class ProjectManagementServiceImpl {
         return new WorkloadRemainDto(100 - totalExistingWorkload);
     }
 
+    @Override
     public void deleteAssignmentFromProject(Long assignmentId) {
         if (!projectAssignmentRepository.existsById(assignmentId)) {
             throw new EntityNotFoundException("Assignment not found");
@@ -290,6 +302,7 @@ public class ProjectManagementServiceImpl {
         projectAssignmentRepository.deleteById(assignmentId);
     }
 
+    @Override
     public void updateAssignment(UpdateAssignmentRequest request) {
         ProjectAssignment projectAssignment = projectAssignmentRepository.findByAssignmentId(request.getAssignmentId()).orElseThrow(() -> new EntityNotFoundException("Assignment not found"));
         WorkloadRemainCheckRequest checkRequest = new WorkloadRemainCheckRequest(projectAssignment.getAssignmentId(), projectAssignment.getEmployeeId(), request.getStartDate(), request.getEndDate());
@@ -322,6 +335,7 @@ public class ProjectManagementServiceImpl {
         projectAssignmentRepository.save(projectAssignment);
     }
 
+    @Override
     public List<ProjectMemberDto> getMembersOfProject(String token, Long projectId) {
 
         Long employeeId = jwtService.extractEmployeeId(token);
@@ -338,16 +352,19 @@ public class ProjectManagementServiceImpl {
         return toProjectMemberDtoList(assignments);
     }
 
+    @Override
     public List<ProjectMemberDto> getCurrentMembersOfProject(Long projectId) {
         List<ProjectAssignment> assignments = projectAssignmentRepository.findCurrentMembersOfProject(projectId, LocalDate.now());
         return toProjectMemberDtoList(assignments);
     }
 
+    @Override
     public List<ProjectMemberDto> getPastMembersOfProject(Long projectId) {
         List<ProjectAssignment> assignments = projectAssignmentRepository.findPastMembersOfProject(projectId, LocalDate.now());
         return toProjectMemberDtoList(assignments);
     }
 
+    @Override
     public List<WorkloadBlockDto> getWorkloadBlocks(Long employeeId, LocalDate from, LocalDate to) {
         // Step 1: Get raw assignments
         List<ProjectAssignment> assignments = projectAssignmentRepository.findOverlappingAssignments(employeeId, from, to);

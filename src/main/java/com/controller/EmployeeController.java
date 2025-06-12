@@ -9,6 +9,8 @@ import com.request.ChangeRoleRequest;
 import com.request.EmployeeCreateRequest;
 import com.request.EmployeeUpdateRequest;
 import com.service.JwtService;
+import com.service.base.EmployeeService;
+import com.service.base.ProjectManagementService;
 import com.service.impl.EmployeeServiceImpl;
 import com.service.impl.ProjectManagementServiceImpl;
 import lombok.AllArgsConstructor;
@@ -28,11 +30,11 @@ import java.util.List;
 @AllArgsConstructor
 public class EmployeeController {
 
-    private final EmployeeServiceImpl employeeService;
+    private final EmployeeService employeeService;
 
     private final JwtService jwtService;
 
-    private final ProjectManagementServiceImpl projectManagementService;
+    private final ProjectManagementService projectManagementService;
 
     @GetMapping("/info")
     public EmployeeDto getEmployeeInfo(@RequestHeader("Authorization") String token) {
