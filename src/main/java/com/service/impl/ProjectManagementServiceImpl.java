@@ -112,31 +112,29 @@ public class ProjectManagementServiceImpl implements ProjectManagementService {
             }
             project.setPmEmail(request.getPmEmail());
         }
-        if (request.getStartDate() != null) {
-            if(project.getStartDate().isBefore(request.getStartDate())) {
-                List<ProjectAssignment> assignments = projectAssignmentRepository.findByProjectId(request.getProjectId());
-                for (ProjectAssignment a : assignments) {
-                    if(a.getStartDate().isBefore(request.getStartDate())) {
-                        a.setStartDate(request.getStartDate());
-                        projectAssignmentRepository.save(a);
-                    }
-                }
-            }
-            project.setStartDate(request.getStartDate());
-        }
-        if (request.getEndDate() != null) {
-            if(project.getEndDate() == null) {
-                List<ProjectAssignment> assignments = projectAssignmentRepository.findByProjectId(request.getProjectId());
-                for (ProjectAssignment a : assignments) {
-                    if(a.getEndDate() == null || a.getEndDate().isAfter(request.getEndDate())) {
-                        a.setEndDate(request.getEndDate());
-                    }
+        if(project.getStartDate().isBefore(request.getStartDate())) {
+            List<ProjectAssignment> assignments = projectAssignmentRepository.findByProjectId(request.getProjectId());
+            for (ProjectAssignment a : assignments) {
+                if(a.getStartDate().isBefore(request.getStartDate())) {
+                    a.setStartDate(request.getStartDate());
                     projectAssignmentRepository.save(a);
                 }
             }
-            project.setEndDate(request.getEndDate());
         }
-        if (request.getDescription() != null) project.setDescription(request.getDescription());
+        project.setStartDate(request.getStartDate());
+
+        if(project.getEndDate() == null) {
+            List<ProjectAssignment> assignments = projectAssignmentRepository.findByProjectId(request.getProjectId());
+            for (ProjectAssignment a : assignments) {
+                if(a.getEndDate() == null || a.getEndDate().isAfter(request.getEndDate())) {
+                    a.setEndDate(request.getEndDate());
+                }
+                projectAssignmentRepository.save(a);
+            }
+        }
+        project.setEndDate(request.getEndDate());
+
+        project.setDescription(request.getDescription());
 
         projectRepository.save(project);
         return toDto(project);
