@@ -100,6 +100,8 @@ public class ProjectManagementController {
         return projectService.getCurrentMembersOfProject(projectId);
     }
 
+
+
     @PreAuthorize("hasRole('PM')")
     @GetMapping("/{projectId}/members/completed")
     public List<ProjectMemberDto> getPastProjectMembers(@PathVariable Long projectId) {
