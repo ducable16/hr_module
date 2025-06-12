@@ -71,6 +71,16 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+    public Page<EmployeeDto> searchEmployeesForAdmin(String keyword, Role role, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("role").ascending());
+
+        Page<Employee> employees = employeeRepository.searchByNameAndRole(keyword, role, pageable);
+
+        return employees.map(this::toDto);
+    }
+
+
+    @Override
     public EmployeeDto getEmployeeByEmail(String token) {
         String email = jwtService.extractUsername(token);
         Employee employee = employeeRepository.findEmployeeByEmail(email).orElseThrow(() -> new EntityNotFoundException("Employee not found"));

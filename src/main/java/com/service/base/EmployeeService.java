@@ -16,6 +16,8 @@ public interface EmployeeService {
 
     Page<EmployeeDto> getAllEmployeesForAdmin(Role role, int page, int size);
 
+    Page<EmployeeDto> searchEmployeesForAdmin(String keyword, Role role, int page, int size);
+
     EmployeeDto getEmployeeByEmail(String email);
 
     EmployeeOnCreateDto createEmployee(EmployeeCreateRequest request);

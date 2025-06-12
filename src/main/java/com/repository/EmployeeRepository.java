@@ -42,4 +42,14 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     Integer findMaxEmployeeCodeNumber();
 
     Page<Employee> findAllByRole(Role role, Pageable pageable);
+
+    @Query("""
+    SELECT e FROM Employee e
+    WHERE LOWER(CONCAT(e.firstName, ' ', e.lastName)) LIKE LOWER(CONCAT('%', :keyword, '%'))
+      AND (:role IS NULL OR e.role = :role)
+""")
+    Page<Employee> searchByNameAndRole(@Param("keyword") String keyword,
+                                       @Param("role") Role role,
+                                       Pageable pageable);
+
 }

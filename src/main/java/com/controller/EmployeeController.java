@@ -54,6 +54,16 @@ public class EmployeeController {
         return employeeService.getAllEmployeesForAdmin(role, page, size);
     }
 
+    @GetMapping("/admin/search")
+    public Page<EmployeeDto> searchEmployeesForAdmin(
+            @RequestParam("keyword") String keyword,
+            @RequestParam(value = "role", required = false) Role role,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        return employeeService.searchEmployeesForAdmin(keyword, role, page, size);
+    }
+
 
     @PostMapping()
     @PreAuthorize("hasRole('ROLE_ADMIN')")
