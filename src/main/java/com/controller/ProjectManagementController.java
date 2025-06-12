@@ -2,14 +2,12 @@ package com.controller;
 
 import com.model.dto.ProjectDto;
 import com.model.dto.ProjectMemberDto;
-import com.request.AssignEmployeeRequest;
-import com.request.ProjectCreateRequest;
-import com.request.ProjectUpdateRequest;
-import com.service.base.ProjectManagementService;
+import com.model.dto.WorkloadRemainDto;
+import com.request.*;
+import com.service.impl.ProjectManagementServiceImpl;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,7 +17,7 @@ import java.util.List;
 @AllArgsConstructor
 public class ProjectManagementController {
 
-    private final ProjectManagementService projectService;
+    private final ProjectManagementServiceImpl projectService;
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -45,24 +43,51 @@ public class ProjectManagementController {
         return projectService.getAllProjectsForAdmin(page, size);
     }
 
-    @GetMapping("/project-manager")
+    @GetMapping("/project-manager/completed")
     @PreAuthorize("hasRole('PM')")
-    public List<ProjectDto> getProjectsForPM(@RequestHeader("Authorization") String token) {
-        return projectService.getProjectsForPM(token);
+    public List<ProjectDto> getCompletedProjectsForPM(@RequestHeader("Authorization") String token) {
+        return projectService.getCompletedProjectsForPM(token);
     }
 
+    @GetMapping("/project-manager/current")
+    @PreAuthorize("hasRole('PM')")
+    public List<ProjectDto> getActiveProjectsForPM(@RequestHeader("Authorization") String token) {
+        return projectService.getActiveProjectForPM(token);
+    }
 
-
-    @GetMapping("/employee/{employeeId}")
-    public List<ProjectDto> getProjectsForEmployee(@PathVariable Long employeeId) {
+    @GetMapping("/current/{employeeId}")
+    public List<ProjectDto> getCurrentProjectsForEmployee(@PathVariable Long employeeId) {
+        return projectService.getCurrentProjectsForEmployee(employeeId);
+    }
+    @GetMapping("/{employeeId}")
+    public List<ProjectDto> getAllProjectsAssignForEmployee(@PathVariable Long employeeId) {
         return projectService.getDistinctProjectsForEmployee(employeeId);
     }
+
 
     @PostMapping("/assign")
     @PreAuthorize("hasRole('PM')")
     public void assignEmployeeToProject(@RequestBody AssignEmployeeRequest request) {
         projectService.assignEmployeeToProject(request);
     }
+
+    @PostMapping("/workload-check")
+    public WorkloadRemainDto workloadPercentRemaining(@RequestBody WorkloadRemainCheckRequest request) {
+        return projectService.workloadPercentRemaining(request);
+    }
+
+    @DeleteMapping("/assignment/{assignmentId}")
+    @PreAuthorize("hasRole('PM')")
+    public void deleteAssignmentFromProject(@PathVariable Long assignmentId) {
+        projectService.deleteAssignmentFromProject(assignmentId);
+    }
+
+    @PutMapping("/update-assignment")
+    public void updateAssignment(@RequestBody UpdateAssignmentRequest request) {
+        projectService.updateAssignment(request);
+    }
+
+
     @GetMapping("/{projectId}/members")
     public List<ProjectMemberDto> getProjectMembers(@RequestHeader("Authorization") String token, @PathVariable Long projectId) {
         return projectService.getMembersOfProject(token, projectId);

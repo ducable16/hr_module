@@ -3,6 +3,7 @@ package com.service.impl;
 import com.config.ValueConfig;
 import com.enums.Role;
 import com.exception.AccessDeniedException;
+import com.exception.BadRequestException;
 import com.model.LoginAccount;
 import com.model.Project;
 import com.model.ProjectAssignment;
@@ -17,7 +18,6 @@ import com.request.ChangeRoleRequest;
 import com.request.EmployeeCreateRequest;
 import com.request.EmployeeUpdateRequest;
 import com.service.JwtService;
-import com.service.base.EmployeeService;
 import com.util.EmployeeCodeGenerator;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,13 +27,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
 
 @Service
 @AllArgsConstructor
-public class EmployeeServiceImpl implements EmployeeService {
+public class EmployeeServiceImpl {
 
     private final EmployeeRepository employeeRepository;
     private final EmployeeCodeGenerator employeeCodeGenerator;
@@ -48,14 +49,12 @@ public class EmployeeServiceImpl implements EmployeeService {
         return new EmployeeDto(employee);
     }
 
-    @Override
     public EmployeeDto getEmployeeById(Long employeeId) {
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new EntityNotFoundException("Employee not found"));
         return toDto(employee);
     }
 
-    @Override
     public Page<EmployeeDto> getAllEmployeesForAdmin(Role role, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("role").ascending());
         Page<Employee> employees;
@@ -68,14 +67,12 @@ public class EmployeeServiceImpl implements EmployeeService {
         return employees.map(this::toDto);
     }
 
-    @Override
     public EmployeeDto getEmployeeByEmail(String token) {
         String email = jwtService.extractUsername(token);
-        Employee employee = employeeRepository.findByEmail(email).orElseThrow(() -> new EntityNotFoundException("Employee not found"));
+        Employee employee = employeeRepository.findEmployeeByEmail(email).orElseThrow(() -> new EntityNotFoundException("Employee not found"));
         return toDto(employee);
     }
 
-    @Override
     public EmployeeOnCreateDto createEmployee(EmployeeCreateRequest request) {
         Employee employee = Employee.builder()
                 .employeeCode(employeeCodeGenerator.generateNextCode())
@@ -99,7 +96,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         return new EmployeeOnCreateDto(employee, valueConfig.getDefaultRawPassword());
     }
 
-    @Override
     public EmployeeDto updateEmployee(EmployeeUpdateRequest request) {
         Employee employee = employeeRepository.findById(request.getEmployeeId()).orElseThrow(() -> new EntityNotFoundException("Employee not found"));
 
@@ -119,14 +115,15 @@ public class EmployeeServiceImpl implements EmployeeService {
         return toDto(employee);
     }
 
-    @Override
+    @Transactional
     public void deleteEmployee(Long employeeId) {
-        if(employeeRepository.findById(employeeId).isEmpty()) throw new EntityNotFoundException("Employee not found");
+        Employee employee = employeeRepository.findById(employeeId).orElseThrow(() -> new EntityNotFoundException("PM not found"));
+        if(employee.getRole() == Role.PM && projectRepository.existsByPmEmail(employee.getEmail())) {
+            throw new BadRequestException("PM still have been assigned to project");
+        }
         employeeRepository.deleteById(employeeId);
-        loginAccountRepository.deleteById(employeeId);
     }
 
-    @Override
     public void changeRole(ChangeRoleRequest request) {
         LoginAccount account = loginAccountRepository.findLoginAccountByEmployeeId(request.getEmployeeId())
                 .orElseThrow(() -> new EntityNotFoundException("Employee not found"));
@@ -138,9 +135,8 @@ public class EmployeeServiceImpl implements EmployeeService {
         employeeRepository.save(employee);
     }
 
-    @Override
     public List<EmployeeProjectParticipationDto> getProjectParticipationHistory(String token, Long employeeId) {
-        if(!jwtService.extractEmployeeId(token).equals(employeeId)) {
+        if(!jwtService.extractEmployeeId(token).equals(employeeId) && !jwtService.extractRole(token).equals(Role.ADMIN)) {
             throw new AccessDeniedException("Access denied");
         };
         List<ProjectAssignment> assignments = projectAssignmentRepository.findByEmployeeId(employeeId);
@@ -184,22 +180,25 @@ public class EmployeeServiceImpl implements EmployeeService {
         return new ArrayList<>(dtoMap.values());
     }
 
-    @Override
-    public List<EmployeeSearchDto> searchByEmail(String emailFragment) {
+    public List<EmployeeSearchDto> searchByEmail(Role role, String emailFragment) {
         if (emailFragment == null || emailFragment.trim().isEmpty()) {
             return Collections.emptyList();
         }
+        List<Employee> employees = new ArrayList<>();
+        emailFragment = emailFragment.trim();
+        if(role != null) {
+            employees = employeeRepository.findTop10ByEmailAndRole(emailFragment, role, PageRequest.of(0, 10));
+        }
+        else employees = employeeRepository.findTop10ByEmailLike(emailFragment, PageRequest.of(0, 10));
 
-        List<Employee> employees = employeeRepository.findTop10ByEmailLike(
-                emailFragment.trim(),
-                PageRequest.of(0, 10)
-        );
+
         List<EmployeeSearchDto> dtos = new ArrayList<>();
         for(Employee employee : employees) {
             EmployeeSearchDto e = EmployeeSearchDto.builder()
                     .employeeId(employee.getId())
                     .email(employee.getEmail())
                     .fullName(employee.getFirstName() + " " + employee.getLastName())
+                    .role(employee.getRole())
                     .build();
             dtos.add(e);
         }
@@ -213,6 +212,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         for (ProjectAssignment assignment : assignments) {
 
             ParticipationPeriodDto dto = ParticipationPeriodDto.builder()
+                    .assignmentId(assignment.getAssignmentId())
                     .startDate(assignment.getStartDate())
                     .endDate(assignment.getEndDate())
                     .workloadPercent(assignment.getWorkloadPercent())

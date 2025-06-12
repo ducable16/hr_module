@@ -16,12 +16,27 @@ import java.util.Optional;
 @Repository
 public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
-    Optional<Employee> findByEmail(String email);
+    Optional<Employee> findEmployeeByEmail(String email);
 
     Optional<Employee> findEmployeeById(Long id);
 
-    @Query("SELECT u FROM Employee u WHERE LOWER(u.email) LIKE LOWER(CONCAT('%', :emailFragment, '%'))")
+    @Query("""
+    SELECT u FROM Employee u 
+    WHERE LOWER(u.email) LIKE LOWER(CONCAT('%', :emailFragment, '%')) 
+    AND u.role <> 'ADMIN'
+""")
     List<Employee> findTop10ByEmailLike(@Param("emailFragment") String emailFragment, Pageable pageable);
+
+    @Query("""
+    SELECT u FROM Employee u 
+    WHERE LOWER(u.email) LIKE LOWER(CONCAT('%', :emailFragment, '%')) 
+    AND u.role = :role
+""")
+    List<Employee> findTop10ByEmailAndRole(
+            @Param("emailFragment") String emailFragment,
+            @Param("role") Role role,
+            Pageable pageable
+    );
 
     @Query("SELECT MAX(CAST(SUBSTRING(e.employeeCode, 5) AS int)) FROM Employee e")
     Integer findMaxEmployeeCodeNumber();

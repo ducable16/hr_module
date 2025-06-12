@@ -1,5 +1,6 @@
 package com.model.dto;
 
+import com.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,4 +12,5 @@ public class EmployeeSearchDto {
     private Long employeeId;
     private String fullName;
     private String email;
+    private Role role;
 }

@@ -23,7 +23,7 @@ public class LoginAccount implements UserDetails {
     @Column(name = "employee_id")
     private Long employeeId;
 
-    @Column(name = "email", nullable = false, unique = true)
+    @Column(name = "email", unique = true)
     private String email;
 
     @Column(nullable = false)
@@ -32,9 +32,6 @@ public class LoginAccount implements UserDetails {
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
     private Role role;
-
-    @Column(name = "is_locked")
-    private boolean isLocked;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -46,7 +43,6 @@ public class LoginAccount implements UserDetails {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = this.createdAt;
-        this.isLocked = false;
     }
 
     @PreUpdate
@@ -72,7 +68,7 @@ public class LoginAccount implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return !isLocked;
+        return true;
     }
 
     @Override

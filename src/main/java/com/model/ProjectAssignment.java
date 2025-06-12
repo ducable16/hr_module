@@ -28,7 +28,7 @@ public class ProjectAssignment {
     @Column(name = "project_id", nullable = false)
     private Long projectId;
 
-    @Column(name = "workload_percent", nullable = false)
+    @Column(name = "workload_percent")
     private Integer workloadPercent;
 
     @Column(name = "start_date", nullable = false)

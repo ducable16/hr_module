@@ -25,16 +25,28 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     @Query("""
     SELECT DISTINCT p FROM Project p
     JOIN ProjectAssignment pa ON pa.projectId = p.id
-    JOIN Employee e ON pa.employeeId = e.id
-    WHERE e.employeeCode = :employeeCode
+    WHERE pa.employeeId = :employeeId
+    AND (p.endDate IS NULL OR p.endDate > CURRENT_TIMESTAMP)
 """)
-    List<Project> findProjectsByEmployeeCode(@Param("employeeCode") String employeeCode);
+    List<Project> findCurrentProjectsByEmployeeId(@Param("employeeId") Long employeeId);
 
-    boolean existsByIdAndPmEmail(Long projectId, String pmEmail);
+    @Query("""
+    SELECT p FROM Project p
+    WHERE p.pmEmail = :pmEmail
+    AND p.endDate < CURRENT_TIMESTAMP
+""")
+    List<Project> findCompletedProjectsByPmEmail(@Param("pmEmail") String pmEmail);
 
-    List<Project> findProjectByPmEmail(String pmEmail);
+    @Query("""
+    SELECT p FROM Project p
+    WHERE p.pmEmail = :pmEmail
+    AND (p.endDate IS NULL OR p.endDate > CURRENT_TIMESTAMP)
+""")
+    List<Project> findActiveProjectsByPmEmail(@Param("pmEmail") String pmEmail);
 
     @Query("SELECT MAX(CAST(SUBSTRING(p.projectCode, 2) AS int)) FROM Project p")
     Integer findMaxProjectCodeNumber();
+
+    boolean existsByPmEmail(String pmEmail);
 
 }

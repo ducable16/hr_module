@@ -26,7 +26,7 @@ public class Project {
     @Column(name = "project_name", nullable = false)
     private String projectName;
 
-    @Column(name = "pm_email", nullable = false)
+    @Column(name = "pm_email")
     private String pmEmail;
 
     @Column(name = "start_date", nullable = false)

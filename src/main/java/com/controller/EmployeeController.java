@@ -9,7 +9,8 @@ import com.request.ChangeRoleRequest;
 import com.request.EmployeeCreateRequest;
 import com.request.EmployeeUpdateRequest;
 import com.service.JwtService;
-import com.service.base.EmployeeService;
+import com.service.impl.EmployeeServiceImpl;
+import com.service.impl.ProjectManagementServiceImpl;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -18,6 +19,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 
@@ -26,9 +28,11 @@ import java.util.List;
 @AllArgsConstructor
 public class EmployeeController {
 
-    private final EmployeeService employeeService;
+    private final EmployeeServiceImpl employeeService;
 
     private final JwtService jwtService;
+
+    private final ProjectManagementServiceImpl projectManagementService;
 
     @GetMapping("/info")
     public EmployeeDto getEmployeeInfo(@RequestHeader("Authorization") String token) {
@@ -78,7 +82,6 @@ public class EmployeeController {
         return employeeService.getProjectParticipationHistory(token, employeeId);
     }
 
-
     @GetMapping("/{projectId}/{employeeId}")
     public List<ParticipationPeriodDto> getEmployeeProjectHistory(@PathVariable Long projectId, @PathVariable Long employeeId) {
         return employeeService.getParticipationPeriod(projectId, employeeId);
@@ -86,8 +89,17 @@ public class EmployeeController {
 
 
     @GetMapping("/search")
-    public List<EmployeeSearchDto> searchByEmail(@RequestParam String email) {
-        return employeeService.searchByEmail(email);
+    public List<EmployeeSearchDto> searchByEmail(@RequestParam(required = false) Role role, @RequestParam String email) {
+        return employeeService.searchByEmail(role, email);
+    }
+
+    @GetMapping("/{employeeId}/workload-blocks")
+    public List<WorkloadBlockDto> getWorkloadBlocks(
+            @PathVariable Long employeeId,
+            @RequestParam LocalDate rangeStart,
+            @RequestParam LocalDate rangeEnd
+    ) {
+        return projectManagementService.getWorkloadBlocks(employeeId, rangeStart, rangeEnd);
     }
 
 
